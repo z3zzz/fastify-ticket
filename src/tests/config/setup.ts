@@ -1,6 +1,5 @@
 import './environment-variables';
 import { app } from '../../app';
-import { initialQuery } from '../../models';
 
 // default user info for auth
 export const TESTER = {
@@ -19,14 +18,14 @@ export const prepareTest = async (): Promise<void> => {
   // bootstrap all plugins
   await app.inject({ url: '/' });
 
-  // check postgresql connection
-  try {
-    await app.pg.connect();
-    await app.pg.query(initialQuery);
-  } catch (err: any) {
-    app.log.error(err.message);
-    process.exit(1);
-  }
+  app.pg.connect((err) => {
+    if (err) {
+      app.log.error(`Postgres connection ERROR on ${process.env.POSTGRES_URL}`);
+      process.exit(1);
+    }
+
+    app.log.info(`Postgres connected at ${process.env.POSTGRES_URL}`);
+  });
 };
 
 const ticketIds: Record<string, string> = {};

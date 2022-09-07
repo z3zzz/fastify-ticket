@@ -1,6 +1,5 @@
 import { app } from './app';
 import { PORT, POSTGRES_URL, JWT_SECRET_KEY, COOKIE_KEY } from './constants';
-import { initialQuery } from './models';
 
 app.listen({ port: PORT, host: '0.0.0.0' }, (err, url) => {
   // fastify startup
@@ -17,12 +16,6 @@ app.listen({ port: PORT, host: '0.0.0.0' }, (err, url) => {
     }
 
     app.log.info(`Postgres connected at ${POSTGRES_URL}`);
-
-    app.pg.query(initialQuery, (err) => {
-      if (err) {
-        app.log.error(err);
-      }
-    });
   });
 
   // Essential constants check
