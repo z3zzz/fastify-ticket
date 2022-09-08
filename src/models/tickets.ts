@@ -29,22 +29,28 @@ export class TicketModel {
   private DEFAULT_OFFSET = 0;
 
   async findById(id: string): Promise<TicketData> {
-    const { rows } = await app.pg.query<TicketData>(`
+    const { rows } = await app.pg.query<TicketData>(
+      `
       SELECT *, user_id AS "userId"
       FROM tickets 
-      WHERE id = '${id}'
-    `);
+      WHERE id = $1
+    `,
+      [id]
+    );
 
     app.log.info(`ticket-findById: ${rows[0]?.id || 'not-found'}`);
     return rows[0];
   }
 
   async findByUserId(userId: string): Promise<TicketData> {
-    const { rows } = await app.pg.query<TicketData>(`
+    const { rows } = await app.pg.query<TicketData>(
+      `
       SELECT *, user_id AS "userId"
       FROM tickets 
-      WHERE user_id = '${userId}'
-    `);
+      WHERE user_id = $1
+    `,
+      [userId]
+    );
 
     app.log.info(`ticket-findByUserId: ${rows[0]?.id || 'not-found'}`);
     return rows[0];
@@ -55,11 +61,14 @@ export class TicketModel {
     price,
     userId,
   }: TicketAttr): Promise<{ isCreated: boolean; id: number }> {
-    const { rows, rowCount } = await app.pg.query<Id>(`
+    const { rows, rowCount } = await app.pg.query<Id>(
+      `
       INSERT INTO tickets (title, price, user_id) 
-      VALUES ('${title}', '${price}', '${userId}')
+      VALUES ($1, $2, $3)
       RETURNING id
-    `);
+    `,
+      [title, price, userId]
+    );
 
     app.log.info(
       `ticket-create: ${rowCount ? 'created' : 'not-created'}, ${title}`
@@ -74,12 +83,15 @@ export class TicketModel {
     limit: number = this.DEFAULT_LIMIT,
     offset: number = this.DEFAULT_OFFSET
   ): Promise<TicketData[]> {
-    const { rows } = await app.pg.query<TicketData>(`
+    const { rows } = await app.pg.query<TicketData>(
+      `
       SELECT *, user_id AS "userId" 
       FROM tickets 
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `);
+      LIMIT $1
+      OFFSET $2
+    `,
+      [limit, offset]
+    );
 
     return rows;
   }
@@ -105,10 +117,13 @@ export class TicketModel {
   }
 
   async deleteById(id: string): Promise<{ isDeleted: boolean }> {
-    const { rowCount } = await app.pg.query(`
+    const { rowCount } = await app.pg.query(
+      `
       DELETE FROM tickets  
-      WHERE id = '${id}'
-    `);
+      WHERE id = $1
+    `,
+      [id]
+    );
 
     app.log.info(
       `ticket-delete: ${rowCount ? 'deleted' : 'not-deleted'}, ${id}`

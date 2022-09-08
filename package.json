@@ -37,6 +37,7 @@
     "@types/jsonwebtoken": "^8.5.8",
     "@types/node": "^18.0.0",
     "@types/pg": "^8.6.5",
+    "@types/pg-format": "^1.0.2",
     "esbuild": "^0.14.47",
     "esbuild-plugin-pino": "^1.2.2",
     "jest": "^28.1.2",

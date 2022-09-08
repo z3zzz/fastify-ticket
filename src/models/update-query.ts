@@ -1,3 +1,5 @@
+import format from 'pg-format';
+
 export function updateQuery(columns: TemplateStringsArray, ...keys: string[]) {
   if (!columns[0]) {
     throw new Error('At least one column should be specified');
@@ -7,9 +9,7 @@ export function updateQuery(columns: TemplateStringsArray, ...keys: string[]) {
     throw new Error('Number of columns and keys should be equal');
   }
 
-  let query = `
-    UPDATE tickets
-  `;
+  let query = 'UPDATE tickets ';
 
   let setFlag = false;
 
@@ -19,16 +19,14 @@ export function updateQuery(columns: TemplateStringsArray, ...keys: string[]) {
     }
 
     if (trim(v) === 'id') {
-      query += `
-        WHERE id = ${keys[i]}
-      `;
+      query += format('WHERE id = %L ', keys[i]);
 
       break;
     }
 
     query += setFlag
-      ? `, ${trim(columns[i])} = '${keys[i]}'`
-      : `SET ${trim(columns[i])} = '${keys[i]}'`;
+      ? format(`, ${trim(columns[i])} = %L `, keys[i])
+      : format(`SET ${trim(columns[i])} = %L `, keys[i]);
 
     setFlag = true;
   }
@@ -38,6 +36,6 @@ export function updateQuery(columns: TemplateStringsArray, ...keys: string[]) {
   return query;
 }
 
-function trim(target: string): string {
+export function trim(target: string): string {
   return target.replace(/(\r\n|\n|\r)/gm, '').trim();
 }

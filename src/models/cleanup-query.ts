@@ -1,3 +1,6 @@
+import format from 'pg-format';
+import { trim } from './update-query';
+
 export function cleanupQuery(columns: TemplateStringsArray, ...keys: string[]) {
   if (!columns[0]) {
     throw new Error('At least one column should be specified');
@@ -7,20 +10,21 @@ export function cleanupQuery(columns: TemplateStringsArray, ...keys: string[]) {
     throw new Error('Number of columns and keys should be equal');
   }
 
-  let query = `
-    DELETE FROM tickets
-    WHERE ${columns[0]} LIKE '%${keys[0]}%'
-    `;
+  let query = format(
+    'DELETE FROM tickets WHERE %I = %L ',
+    trim(columns[0]),
+    keys[0]
+  );
 
   for (const [i, v] of columns.entries()) {
     if (!i || !v) {
       continue;
     }
 
-    query += `
-    OR ${columns[i]} LIKE '%${keys[i]}%'
-    `;
+    query += format('OR %I = %L ', trim(columns[0]), keys[i]);
   }
+
+  console.log(query);
 
   return query;
 }
