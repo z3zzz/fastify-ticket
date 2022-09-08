@@ -22,6 +22,7 @@ export interface TicketData {
   userId: number;
   title: string;
   price: string;
+  createdAt: string;
 }
 
 export class TicketModel {
@@ -31,7 +32,7 @@ export class TicketModel {
   async findById(id: string): Promise<TicketData> {
     const { rows } = await app.pg.query<TicketData>(
       `
-      SELECT *, user_id AS "userId"
+      SELECT *, user_id AS "userId", created_at AS "createdAt"
       FROM tickets 
       WHERE id = $1
     `,
@@ -45,7 +46,7 @@ export class TicketModel {
   async findByUserId(userId: string): Promise<TicketData> {
     const { rows } = await app.pg.query<TicketData>(
       `
-      SELECT *, user_id AS "userId"
+      SELECT *, user_id AS "userId", created_at AS "createdAt"
       FROM tickets 
       WHERE user_id = $1
     `,
@@ -85,7 +86,7 @@ export class TicketModel {
   ): Promise<TicketData[]> {
     const { rows } = await app.pg.query<TicketData>(
       `
-      SELECT *, user_id AS "userId" 
+      SELECT *, user_id AS "userId", created_at AS "createdAt"
       FROM tickets 
       LIMIT $1
       OFFSET $2

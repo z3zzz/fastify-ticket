@@ -20,6 +20,7 @@ interface GetTicket {
     userId: number;
     title: string;
     price: string;
+    createdAt: string;
   };
 }
 
@@ -44,6 +45,7 @@ export async function getTicketRoutes(
             userId: { type: 'number' },
             title: { type: 'string', minLength: 2, maxLength: 30 },
             price: { type: 'string', maxLength: 10 },
+            createdAt: { type: 'string' },
           },
         },
       },
