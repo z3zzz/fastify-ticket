@@ -46,7 +46,6 @@ export async function deleteTicketRoutes(
     const { isDeleted } = await ticketModel.deleteById(id);
 
     if (!isDeleted) {
-      app.log.info('wwwwwwwwwwwwwwwwwwwwwwwwwwww');
       throw new NotFoundError(
         `Ticket for id ${id} was not found, or not deleted due to other reason.`
       );
