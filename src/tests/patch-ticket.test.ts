@@ -185,7 +185,7 @@ describe('patch-ticket test', () => {
 
   it('PATCH "/ticket" sends Unauthorized 401 for cookie', async () => {
     const res = await app.inject({
-      method: 'get',
+      method: 'patch',
       url: `/ticket`,
       payload: {
         title: TITLE2,
@@ -194,5 +194,23 @@ describe('patch-ticket test', () => {
     });
 
     expect(res.statusCode).toBe(401);
+  });
+
+  it('PATCH "/ticket" sends 404 for failed update', async () => {
+    const res = await app.inject({
+      method: 'patch',
+      url: `/ticket`,
+      payload: {
+        id: 999999,
+        title: TITLE2,
+        price: PRICE2,
+      },
+      cookies: { token: TESTER.cookie },
+    });
+
+    const body = JSON.parse(res.body);
+
+    expect(res.statusCode).toBe(404);
+    expect(body.message).toMatch(/id/);
   });
 });

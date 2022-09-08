@@ -57,10 +57,23 @@ describe('delete-ticket test', () => {
 
   it('DELETE "/ticket" sends Unauthorized 401 for cookie', async () => {
     const res = await app.inject({
-      method: 'get',
+      method: 'delete',
       url: `/ticket?id=1`,
     });
 
     expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE "/ticket" sends 404 for failed update', async () => {
+    const res = await app.inject({
+      method: 'delete',
+      url: `/ticket?id=999999`,
+      cookies: { token: TESTER.cookie },
+    });
+
+    const body = JSON.parse(res.body);
+
+    expect(res.statusCode).toBe(404);
+    expect(body.message).toMatch(/id/);
   });
 });

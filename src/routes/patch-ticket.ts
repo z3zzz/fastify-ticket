@@ -3,6 +3,7 @@ import {
   FastifyPluginOptions,
   RouteShorthandOptions,
 } from 'fastify';
+import { NotFoundError } from '../errors';
 import { ticketModel, UpdateTicketAttr } from '../models';
 
 interface PatchTicket {
@@ -47,6 +48,12 @@ export async function patchTicketRoutes(
       title,
       price,
     });
+
+    if (!isUpdated) {
+      throw new NotFoundError(
+        `Ticket for id ${id} was not found, or not updated due to other reason.`
+      );
+    }
 
     return { isUpdated };
   });

@@ -3,6 +3,7 @@ import {
   FastifyPluginOptions,
   RouteShorthandOptions,
 } from 'fastify';
+import { NotFoundError } from '../errors';
 import { ticketModel } from '../models';
 
 interface DeleteTicket {
@@ -43,6 +44,13 @@ export async function deleteTicketRoutes(
     const { id } = req.query;
 
     const { isDeleted } = await ticketModel.deleteById(id);
+
+    if (!isDeleted) {
+      app.log.info('wwwwwwwwwwwwwwwwwwwwwwwwwwww');
+      throw new NotFoundError(
+        `Ticket for id ${id} was not found, or not deleted due to other reason.`
+      );
+    }
 
     res.status(200);
     return { isDeleted };
