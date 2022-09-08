@@ -133,6 +133,14 @@ export class TicketModel {
 
     return { isDeleted };
   }
+
+  async count(): Promise<number> {
+    const { rows } = await app.pg.query<{ count: string }>(`
+      SELECT COUNT(*) FROM tickets;
+    `);
+
+    return parseInt(rows[0].count);
+  }
 }
 
 export const ticketModel = new TicketModel();

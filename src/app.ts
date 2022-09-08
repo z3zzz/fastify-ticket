@@ -6,7 +6,7 @@ import {
   patchTicketRoutes,
   postTicketRoutes,
 } from './routes';
-import { cors, cookie, postgres, jwt, formBody } from './plugins';
+import { cors, cookie, jwt, formBody } from './plugins';
 import { NODE_ENV } from './constants';
 
 // main
@@ -23,10 +23,9 @@ export const app = Fastify({
   disableRequestLogging: true,
 });
 
-// plugins
+// plugins (except postgres, which is in ./index.js)
 app.register(cors);
 app.register(cookie);
-app.register(postgres);
 app.register(jwt);
 app.register(formBody);
 

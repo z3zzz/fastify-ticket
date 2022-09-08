@@ -1,5 +1,10 @@
+import { randomBytes } from 'crypto';
+import format from 'pg-format';
+import migrate from 'node-pg-migrate';
+import fastifyPostgres from '@fastify/postgres';
 import './environment-variables';
 import { app } from '../../app';
+import { POSTGRES_URL } from '../../constants';
 
 // default user info for auth
 export const TESTER = {
@@ -9,44 +14,77 @@ export const TESTER = {
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAwLCJlbWFpbCI6InNpZ25pbkBleGFtcGxlLmNvbSIsImlhdCI6MTY2MDYzODg1N30.oqZn8yAe0Nx7Q4tD8p5E66o13w1pH89PHkCSQf3zkho.2xZgvMf1uw3z6N28WoffzkFdbAe2hTODTexiGrpsH+Y',
 };
 
+// default ticket info
 export const TICKET = {
   title: 'test-ticket',
   price: '494410',
 };
 
-export const prepareTest = async (): Promise<void> => {
-  // bootstrap all plugins
-  await app.inject({ url: '/' });
+export class Context {
+  static async build(): Promise<Context> {
+    // create random string
+    const roleName = 'a' + randomBytes(4).toString('hex');
+    const testUrl = `postgresql://${roleName}:${roleName}@localhost:5432/social`;
 
-  app.pg.connect((err) => {
-    if (err) {
-      app.log.error(`Postgres connection ERROR on ${process.env.POSTGRES_URL}`);
-      process.exit(1);
-    }
+    // register default pg opt as admin
+    app.register(fastifyPostgres, {
+      connectionString: POSTGRES_URL,
+      name: 'admin',
+    });
+    // register pg with random user opt as default (no name)
+    app.register(fastifyPostgres, {
+      connectionString: testUrl,
+    });
 
-    app.log.info(`Postgres connected at ${process.env.POSTGRES_URL}`);
-  });
-};
+    // bootstrap all plugins
+    await app.inject({ url: '/' });
 
-const ticketIds: Record<string, string> = {};
-export const getTicketId = async (title?: string): Promise<string> => {
-  if (title && ticketIds[title]) {
-    return ticketIds[title];
+    // connect to pool with admin
+    await app.pg.admin.connect();
+
+    // create user
+    await app.pg.admin.query(
+      format('CREATE ROLE %I WITH LOGIN PASSWORD %L;', roleName, roleName)
+    );
+
+    // create schema
+    await app.pg.admin.query(
+      format('CREATE SCHEMA %I AUTHORIZATION %I;', roleName, roleName)
+    );
+
+    // migrate up for the schema
+    await migrate({
+      schema: roleName,
+      direction: 'up',
+      noLock: true,
+      dir: 'migrations',
+      databaseUrl: testUrl,
+      migrationsTable: 'pgmigrations',
+      log: () => {},
+    });
+
+    // connect to pool with created user
+    await app.pg.connect();
+
+    return new Context(roleName);
   }
 
-  if (title && !ticketIds[title]) {
-    const id = await createTicket(title);
-    ticketIds[title] = id;
+  constructor(private roleName: string) {}
 
-    return id;
+  async reset(table: string): Promise<void> {
+    // delete rows from table
+    await app.pg.query(format('DELETE FROM %I', table));
   }
 
-  const id = await createTicket();
+  async clean(): Promise<void> {
+    // delete schema
+    await app.pg.admin.query(format('DROP SCHEMA %I CASCADE', this.roleName));
+    // delete user
+    await app.pg.admin.query(format('DROP ROLE %I', this.roleName));
+  }
+}
 
-  return id;
-};
-
-async function createTicket(title?: string) {
+export async function createTicket(title?: string) {
   const res = await app.inject({
     method: 'POST',
     url: '/ticket',

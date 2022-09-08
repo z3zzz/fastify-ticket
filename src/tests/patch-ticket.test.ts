@@ -1,26 +1,28 @@
 import { app } from '../app';
-import { cleanupQuery } from '../models';
-import { TESTER, TICKET, prepareTest, getTicketId } from './config/setup';
+import { TESTER, createTicket, Context } from './config/setup';
 
 describe('patch-ticket test', () => {
-  const TITLE = 'patch-ticket';
   const TITLE2 = 'patch-ticket-2';
-  const TITLE3 = 'patch-ticket-3';
   const PRICE2 = 'price-2';
+  const TITLE3 = 'patch-ticket-3';
   const PRICE3 = 'price-3';
 
+  let context: Context;
+
   beforeAll(async () => {
-    await prepareTest();
+    context = await Context.build();
+  });
+
+  beforeEach(async () => {
+    await context.reset('tickets');
   });
 
   afterAll(async () => {
-    await app.pg.query(
-      cleanupQuery`title ${TITLE} title ${TITLE2} title ${TITLE3}`
-    );
+    await context.clean();
   });
 
   it('PATCH "/ticket" changes ticket values', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',
@@ -37,10 +39,22 @@ describe('patch-ticket test', () => {
 
     expect(res.statusCode).toBe(200);
     expect(body.isUpdated).toBe(true);
+
+    const res2 = await app.inject({
+      method: 'get',
+      url: `/ticket?id=${id}`,
+      cookies: { token: TESTER.cookie },
+    });
+
+    const body2 = JSON.parse(res2.body);
+
+    expect(res2.statusCode).toBe(200);
+    expect(body2.title).toBe(TITLE2);
+    expect(body2.price).toBe(PRICE2);
   });
 
   it('PATCH "/ticket" changes only title', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',
@@ -56,10 +70,20 @@ describe('patch-ticket test', () => {
 
     expect(res.statusCode).toBe(200);
     expect(body.isUpdated).toBe(true);
+
+    const res2 = await app.inject({
+      method: 'get',
+      url: `/ticket?id=${id}`,
+      cookies: { token: TESTER.cookie },
+    });
+    const body2 = JSON.parse(res2.body);
+
+    expect(res2.statusCode).toBe(200);
+    expect(body2.title).toBe(TITLE3);
   });
 
   it('PATCH "/ticket" changes only price', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',
@@ -75,6 +99,16 @@ describe('patch-ticket test', () => {
 
     expect(res.statusCode).toBe(200);
     expect(body.isUpdated).toBe(true);
+
+    const res2 = await app.inject({
+      method: 'get',
+      url: `/ticket?id=${id}`,
+      cookies: { token: TESTER.cookie },
+    });
+    const body2 = JSON.parse(res2.body);
+
+    expect(res2.statusCode).toBe(200);
+    expect(body2.price).toBe(PRICE3);
   });
 
   it('PATCH "/ticket" sends Bad Request for id', async () => {
@@ -95,7 +129,7 @@ describe('patch-ticket test', () => {
   });
 
   it('PATCH "/ticket" sends Bad Request for short title', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',
@@ -115,7 +149,7 @@ describe('patch-ticket test', () => {
   });
 
   it('PATCH "/ticket" sends Bad Request for long price', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',
@@ -135,7 +169,7 @@ describe('patch-ticket test', () => {
   });
 
   it('PATCH "/ticket" sends Bad Request for empty payload', async () => {
-    const id = await getTicketId(TITLE);
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'patch',

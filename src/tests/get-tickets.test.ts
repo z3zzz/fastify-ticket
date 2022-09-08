@@ -1,20 +1,24 @@
 import { app } from '../app';
-import { cleanupQuery } from '../models';
-import { TESTER, TICKET, prepareTest, getTicketId } from './config/setup';
+import { TESTER, TICKET, createTicket, Context } from './config/setup';
 
 describe('get-tickets test', () => {
-  const TITLE = 'get-tickets';
+  let context: Context;
 
   beforeAll(async () => {
-    await prepareTest();
+    context = await Context.build();
+  });
+
+  beforeEach(async () => {
+    await context.reset('tickets');
   });
 
   afterAll(async () => {
-    await app.pg.query(cleanupQuery`title ${TITLE}`);
+    await context.clean();
   });
 
-  it('GET "/tickets" sends [{title: get-tickets, price, 12345}]', async () => {
-    const id = await getTicketId(TITLE);
+  it('GET "/tickets" sends [{title: ticket1, price: ---}, {title: ticket2, price: ---}]', async () => {
+    await createTicket('ticket1');
+    await createTicket('ticket2');
 
     const res = await app.inject({
       method: 'get',
@@ -23,11 +27,17 @@ describe('get-tickets test', () => {
     });
 
     const body = JSON.parse(res.body);
-    const ticket = expect.objectContaining({
-      title: TITLE,
+
+    const ticket1 = expect.objectContaining({
+      title: 'ticket1',
       price: TICKET.price,
     });
-    const tickets = expect.arrayContaining([ticket]);
+    const ticket2 = expect.objectContaining({
+      title: 'ticket2',
+      price: TICKET.price,
+    });
+
+    const tickets = expect.arrayContaining([ticket1, ticket2]);
 
     expect(res.statusCode).toBe(200);
     expect(body).toEqual(tickets);

@@ -1,20 +1,23 @@
 import { app } from '../app';
-import { cleanupQuery } from '../models';
-import { TESTER, TICKET, prepareTest, getTicketId } from './config/setup';
+import { TESTER, TICKET, Context, createTicket } from './config/setup';
 
 describe('get-ticket test', () => {
-  const TITLE = 'get-ticket';
+  let context: Context;
 
   beforeAll(async () => {
-    await prepareTest();
+    context = await Context.build();
+  });
+
+  beforeEach(async () => {
+    await context.reset('tickets');
   });
 
   afterAll(async () => {
-    await app.pg.query(cleanupQuery`title ${TITLE}`);
+    await context.clean();
   });
 
-  it('GET "/ticket?id={some-number}" sends {title: get-ticket, price, 12345}', async () => {
-    const id = await getTicketId(TITLE);
+  it('GET "/ticket?id={some-number}" sends TICKET data', async () => {
+    const id = await createTicket();
 
     const res = await app.inject({
       method: 'get',
@@ -25,7 +28,7 @@ describe('get-ticket test', () => {
     const body = JSON.parse(res.body);
 
     expect(res.statusCode).toBe(200);
-    expect(body.title).toBe(TITLE);
+    expect(body.title).toBe(TICKET.title);
     expect(body.price).toBe(TICKET.price);
     expect(body.id).toBe(id);
     expect(body.userId).toEqual(TESTER.id);

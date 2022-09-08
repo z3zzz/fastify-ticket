@@ -1,17 +1,25 @@
 import { app } from '../app';
-import { cleanupQuery } from '../models';
-import { TESTER, TICKET, prepareTest } from './config/setup';
+import { ticketModel } from '../models';
+import { TESTER, TICKET, Context } from './config/setup';
 
 describe('post-ticket test', () => {
+  let context: Context;
+
   beforeAll(async () => {
-    await prepareTest();
+    context = await Context.build();
+  });
+
+  beforeEach(async () => {
+    await context.reset('tickets');
   });
 
   afterAll(async () => {
-    await app.pg.query(cleanupQuery`title ${TICKET.title}`);
+    await context.clean();
   });
 
-  it('POST "/ticket" sends {title: test-ticket, id: some-number}', async () => {
+  it('POST "/ticket" creates TICKET', async () => {
+    const numberOfRows1 = await ticketModel.count();
+
     const res = await app.inject({
       method: 'post',
       url: '/ticket',
@@ -19,11 +27,15 @@ describe('post-ticket test', () => {
       cookies: { token: TESTER.cookie },
     });
 
+    const numberOfRows2 = await ticketModel.count();
+
     const body = JSON.parse(res.body);
 
     expect(res.statusCode).toBe(201);
     expect(body.title).toBe(TICKET.title);
+    expect(body.price).toBe(TICKET.price);
     expect(body.id).toEqual(expect.any(Number));
+    expect(numberOfRows2 - numberOfRows1).toBe(1);
   });
 
   it('POST "/ticket" sends Bad Request for title', async () => {

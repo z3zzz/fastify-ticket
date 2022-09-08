@@ -3,6 +3,7 @@ import {
   FastifyPluginOptions,
   RouteShorthandOptions,
 } from 'fastify';
+import { NotFoundError } from '../errors';
 import { ticketModel } from '../models';
 
 interface User {
@@ -54,6 +55,10 @@ export async function getTicketRoutes(
     const { id } = req.query;
 
     const ticket = await ticketModel.findById(id);
+
+    if (!ticket) {
+      throw new NotFoundError(`No ticket found for the id ${id}`);
+    }
 
     res.status(200);
     return ticket;

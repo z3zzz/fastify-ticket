@@ -1,5 +1,8 @@
 import { app } from './app';
+import { postgres } from './plugins';
 import { PORT, POSTGRES_URL, JWT_SECRET_KEY, COOKIE_KEY } from './constants';
+
+app.register(postgres);
 
 app.listen({ port: PORT, host: '0.0.0.0' }, (err, url) => {
   // fastify startup
