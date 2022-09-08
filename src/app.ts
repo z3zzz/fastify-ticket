@@ -5,6 +5,7 @@ import {
   greetingRoutes,
   patchTicketRoutes,
   postTicketRoutes,
+  deleteTicketRoutes,
 } from './routes';
 import { cors, cookie, jwt, formBody } from './plugins';
 import { NODE_ENV } from './constants';
@@ -35,3 +36,4 @@ app.register(postTicketRoutes);
 app.register(getTicketRoutes);
 app.register(getTicketsRoutes);
 app.register(patchTicketRoutes);
+app.register(deleteTicketRoutes);
