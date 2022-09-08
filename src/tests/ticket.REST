@@ -1,0 +1,37 @@
+@jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAwLCJlbWFpbCI6InNpZ25pbkBleGFtcGxlLmNvbSIsImlhdCI6MTY2MDYzODg1N30.oqZn8yAe0Nx7Q4tD8p5E66o13w1pH89PHkCSQf3zkho.2xZgvMf1uw3z6N28WoffzkFdbAe2hTODTexiGrpsH+Y'
+
+GET http://localhost:5000
+
+###
+curl --request POST \
+  --url http://localhost:5000/ticket
+  --header 'Content-Type: application/json'
+  --cookie 'token={{jwt}}'
+  --data-raw '{
+    "title": "my-ticket",
+    "price": 19520
+  }'
+
+###
+curl http://localhost:5000/tickets \
+  --cookie 'token={{jwt}}'
+
+###
+curl http://localhost:5000/ticket?id=44 \
+  --cookie 'token={{jwt}}'
+
+###
+curl --request PATCH \
+  --url http://localhost:5000/ticket
+  --header 'Content-Type: application/json'
+  --cookie 'token={{jwt}}'
+  --data-raw '{
+    "id": 44,
+    "title": "my-ticket2",
+    "price": 1900
+  }'
+
+###
+curl --request DELETE \
+  --url http://localhost:5000/ticket?id=44
+  --cookie 'token={{jwt}}'
