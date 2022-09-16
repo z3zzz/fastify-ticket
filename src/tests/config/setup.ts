@@ -2,9 +2,8 @@ import { randomBytes } from 'crypto';
 import format from 'pg-format';
 import migrate from 'node-pg-migrate';
 import fastifyPostgres from '@fastify/postgres';
-import './environment-variables';
+import { POSTGRES_TEST_URL_ADMIN } from './environment-variables';
 import { app } from '../../app';
-import { POSTGRES_URL } from '../../constants';
 
 // default user info for auth
 export const TESTER = {
@@ -24,23 +23,32 @@ export class Context {
   static async build(): Promise<Context> {
     // create random string
     const roleName = 'a' + randomBytes(4).toString('hex');
-    const testUrl = `postgresql://${roleName}:${roleName}@localhost:5432/social`;
+    const POSTGRES_TEST_URL = `postgresql://${roleName}:${roleName}@${
+      POSTGRES_TEST_URL_ADMIN.split('@')[1]
+    }`;
 
     // register default pg opt as admin
     app.register(fastifyPostgres, {
-      connectionString: POSTGRES_URL,
+      connectionString: POSTGRES_TEST_URL_ADMIN,
       name: 'admin',
     });
     // register pg with random user opt as default (no name)
     app.register(fastifyPostgres, {
-      connectionString: testUrl,
+      connectionString: POSTGRES_TEST_URL,
     });
 
     // bootstrap all plugins
     await app.inject({ url: '/' });
 
     // connect to pool with admin
-    await app.pg.admin.connect();
+    try {
+      await app.pg.admin.connect();
+    } catch (e: any) {
+      console.error(e.message);
+      process.exit(1); // postgres connection failed
+      // 1) postgres server is not running, or
+      // 2) connection url is wrong
+    }
 
     // create user
     await app.pg.admin.query(
@@ -58,7 +66,7 @@ export class Context {
       direction: 'up',
       noLock: true,
       dir: 'migrations',
-      databaseUrl: testUrl,
+      databaseUrl: POSTGRES_TEST_URL,
       migrationsTable: 'pgmigrations',
       log: () => {},
     });

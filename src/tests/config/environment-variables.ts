@@ -1,9 +1,7 @@
 import { POSTGRES_URL, JWT_SECRET_KEY, COOKIE_KEY } from '../../constants';
 
 // Set database name to "<currentDatabase>_test"
-if (!POSTGRES_URL.includes('test')) {
-  process.env.POSTGRES_URL = `${POSTGRES_URL}_test`;
-}
+export const POSTGRES_TEST_URL_ADMIN = `${POSTGRES_URL}_test`;
 
 // Essential envs check
 if (!JWT_SECRET_KEY) {
